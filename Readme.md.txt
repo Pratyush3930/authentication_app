@@ -17,7 +17,7 @@ Setup Instructions
 Clone the Repository:
 bash
 Copy code
-git clone https://github.com/your-username/your-repository.git
+git clone https://github.com/Pratyush3930/authentication_app
 Install Dependencies:
 Navigate to the frontend directory and install frontend dependencies:
 bash
@@ -29,19 +29,14 @@ bash
 Copy code
 cd ../backend
 npm install
-Set Up Environment Variables:
-In the backend directory, create a .env file and add the following variables:
-makefile
-Copy code
-PORT=3001
-MONGODB_URI=your-mongodb-uri
-JWT_SECRET=your-secret-key
+
 Start the Development Servers:
 Start the backend server:
 bash
 Copy code
 cd backend
-npm start
+nodemon server.js
+
 Start the frontend server:
 bash
 Copy code
