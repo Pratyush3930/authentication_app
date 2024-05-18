@@ -3,7 +3,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const cors = require('cors');
-const PORT = 8000;
+const PORT = process.env.PORT || 8000;
 const app = express();
 
 const { User, syncDatabase } = require("./model/User");
