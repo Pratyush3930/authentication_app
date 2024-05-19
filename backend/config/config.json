@@ -19,7 +19,8 @@
     "dialectOptions": {
       "ssl": {
         "require": true,
-        "rejectUnauthorized": false
+        "rejectUnauthorized": false,
+        "ca": "../ca-certificate.crt"
       }
     }
   }
