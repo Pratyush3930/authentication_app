@@ -11,7 +11,8 @@ const PORT = process.env.PORT || 8000;
 const app = express();
 
 const corsOptions = {
-  origin: 'http://localhost:3000', // Allow requests from this origin
+  // origin: 'http://localhost:3000', // Allow requests from this origin
+  origin: 'https://664a25498c65b1d1ba4cda78--fluffy-sorbet-25d20f.netlify.app/', // Allow requests from this origin
   methods: 'GET,POST,PUT,DELETE', // Allow only these HTTP methods
   allowedHeaders: 'Content-Type,Authorization', // Allow only these headers 
   credentials: true, // Allow credentials
