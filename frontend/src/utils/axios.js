@@ -1,6 +1,8 @@
 import axios from "axios";
 
-const BASE_URL = "http://localhost:8000/api/auth";
+// const BASE_URL = "http://localhost:8000/api/auth";
+
+const BASE_URL = "https://authentication-app-o689.onrender.com/";
 
 
 export const axiosPrivate = axios.create({
