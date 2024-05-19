@@ -3,11 +3,15 @@ const path = require('path');
 
 module.exports = {
   development: {
-    username: "postgres",
-    password: "postgres12",
-    database: "newdb",
-    host: "127.0.0.1",
-    dialect: "postgres"
+    use_env_variable: "DATABASE_URL",
+    dialect: "postgres",
+    dialectOptions: {
+      ssl: {
+        require: false,
+        rejectUnauthorized: false,
+        ca: fs.readFileSync(path.resolve(__dirname, '../ca-certificate.crt')).toString()
+      }
+    }
   },
   test: {
     username: "postgres",
@@ -21,7 +25,7 @@ module.exports = {
     dialect: "postgres",
     dialectOptions: {
       ssl: {
-        require: true,
+        require: false,
         rejectUnauthorized: false,
         ca: fs.readFileSync(path.resolve(__dirname, '../ca-certificate.crt')).toString()
       }
