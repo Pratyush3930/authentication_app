@@ -1,12 +1,14 @@
+require('dotenv').config();
+
 const express = require("express");
 const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const cors = require('cors');
+const db = require("./models"); // Import the db object
+
 const PORT = process.env.PORT || 8000;
 const app = express();
-
-const { User, syncDatabase } = require("./model/User");
 
 const corsOptions = {
   origin: 'http://localhost:3000', // Allow requests from this origin
@@ -22,42 +24,46 @@ app.use(cookieParser());
 // to handle cors error
 app.use(cors(corsOptions));
 
-syncDatabase();
+// Sync database
+db.sequelize.sync({ alter: true })
+  .then(() => {
+    console.log('Database synchronized successfully.');
+  })
+  .catch((error) => {
+    console.error('Unable to synchronize database:', error);
+  });
 
+// Routes
 app.post("/api/auth/register", async (req, res) => {
   try {
     const { name, password, email } = req.body;
-    // if the data doesnt exists
+    // if the data doesn't exist
     if (!(name && password && email)) {
-      res.status(400).send("All fields are compulsory!");
+      return res.status(400).send("All fields are compulsory!");
     }
     // check if user exists
-    const ExistingUser = await User.findOne({ where: { email } });
-    if (ExistingUser) {
-      res.status(409).send("User with this email already exists!");
+    const existingUser = await db.User.findOne({ where: { email } });
+    if (existingUser) {
+      return res.status(409).send("User with this email already exists!");
     } else {
-      //encrypt the password
+      // encrypt the password
       const encPassword = await bcrypt.hash(password, 10);
-      const user = await User.create({ name, email, password: encPassword });
+      const user = await db.User.create({ name, email, password: encPassword });
 
       // generate a token for user
-      // when the token is verified then it only shows the id and email for any operation
-      // does not give away the password
-      const token = jwt.sign({ id: user.pid, email }, "shhhh", {
-        // the shhh is a secret key that only the server knows
-        // it is used to sign and verify the token
+      const token = jwt.sign({ id: user.pid, email }, process.env.JWT_SECRET || "shhhh", {
         expiresIn: "2d",
       });
 
       user.token = token;
       user.password = undefined;
     
-      // res.send() sends the data as json in express but this one is more clear
-      res.status(200).json(user); //converted to json string by express before sending it
       // send the data as json
+      return res.status(200).json(user);
     }
   } catch (error) {
     console.log(error);
+    return res.status(500).send("Internal Server Error");
   }
 });
 
@@ -65,44 +71,45 @@ app.post("/api/auth/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!(email && password)) {
-      res.status(400).send("Incomplete data!");
+      return res.status(400).send("Incomplete data!");
     } else {
-      const user = await User.findOne( {where: { email: email }});
+      const user = await db.User.findOne({ where: { email } });
       if (!user) {
-        res.status(404).send("User does not exist");
+        return res.status(404).send("User does not exist");
       }
       const pass = await bcrypt.compare(password, user.password);
       if (user && pass) {
-        const token = jwt.sign({ id: user.pid }, "shhhh");
+        const token = jwt.sign({ id: user.pid }, process.env.JWT_SECRET || "shhhh");
         user.token = token;
         user.password = undefined;
 
         // send token in user cookie
         const options = {
-          expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), //data.now + 3days converted to millisec
+          expires: new Date(Date.now() + 3 * 24 * 60 * 60 * 1000), // data.now + 3days converted to milliseconds
           httpOnly: true, // can only be accessed by the server
         };
         // the name of cookie is token
-        res.status(200).cookie("token", token, options).json({
+        return res.status(200).cookie("token", token, options).json({
           success: true,
           token,
           user,
         });
+      } else {
+        return res.status(401).send("Invalid credentials");
       }
     }
   } catch (error) {
     console.log(error);
+    return res.status(500).send("Internal Server Error");
   }
 });
 
-app.put("/api/auth/profile", async(req,res) => {
+app.put("/api/auth/profile", async (req, res) => {
   try {
     console.log('request starts from here watch out:', req);
     const authHeader = req.headers['authorization'];
-    const email = req.body.email;
-    const name = req.body.name;
-    console.log(authHeader)
-    console.log(req.body)
+    const { email, name } = req.body;
+
     if (!authHeader) {
       return res.status(401).json({ message: 'No token provided' });
     }
@@ -112,14 +119,14 @@ app.put("/api/auth/profile", async(req,res) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, 'shhhh');
-    const [updatedRowsCount] = await User.update(
-      { email: email, name: name },
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'shhhh');
+    const [updatedRowsCount] = await db.User.update(
+      { email, name },
       {
         where: {
           pid: decoded.id,
         },
-      },
+      }
     );
 
     if (updatedRowsCount === 0) {
@@ -127,19 +134,18 @@ app.put("/api/auth/profile", async(req,res) => {
     }
 
     // Fetch the updated user from the database
-    var updatedUser = await User.findOne({ where: { pid: decoded.id } });
-    console.log('updatedUser',updatedUser);
-    updatedUser = { ...updatedUser.toJSON(), token: token }; // converting sequelize model instance to a plain js object
-    res.status(200).json(updatedUser);
+    let updatedUser = await db.User.findOne({ where: { pid: decoded.id } });
+    updatedUser = { ...updatedUser.toJSON(), token }; // converting sequelize model instance to a plain js object
+    return res.status(200).json(updatedUser);
   } catch (error) {
     console.log(error);
+    return res.status(500).send("Internal Server Error");
   }
-})
+});
 
 app.delete("/api/auth/profile", async (req, res) => {
   try {
     const authHeader = req.headers['authorization'];
-    console.log(authHeader)
     if (!authHeader) {
       return res.status(401).json({ message: 'No token provided' });
     }
@@ -149,17 +155,16 @@ app.delete("/api/auth/profile", async (req, res) => {
       return res.status(401).json({ message: 'No token provided' });
     }
 
-    const decoded = jwt.verify(token, 'shhhh');
-    console.log(decoded);
-    await User.destroy({
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'shhhh');
+    await db.User.destroy({
       where: {
         pid: decoded.id,
       },
     });
-    res.status(200).send('Account deletion successful!');
+    return res.status(200).send('Account deletion successful!');
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: 'Internal server error' });
+    return res.status(500).send("Internal Server Error");
   }
 });
 

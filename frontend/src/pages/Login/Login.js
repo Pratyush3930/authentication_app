@@ -1,7 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 
-const Login = ({handleLogin}) => {
+const Login = ({ handleLogin, error, errMsg }) => {
   const navigate = useNavigate();
   return (
     <div>
@@ -19,6 +19,7 @@ const Login = ({handleLogin}) => {
             name="email"
             placeholder="Email"
             className="input"
+            required
           />
           <input
             type="password"
@@ -26,8 +27,13 @@ const Login = ({handleLogin}) => {
             name="password"
             placeholder="Password"
             className="input"
+            required
           />
-          <button type="submit" className="button bg-darkblue w-full">Submit</button>
+          {error && <p className="error ">{errMsg}</p>}
+
+          <button type="submit" className="button bg-darkblue min-w-30 w-52">
+            Submit
+          </button>
         </form>
       </div>
     </div>

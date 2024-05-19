@@ -36,11 +36,11 @@ const Home = ({ handleLogOut, loggedIn, setMenu }) => {
           className="flex
       items-center justify-center w-full flex-1 flex-col gap-10"
         >
-          <div className="flex flex-col gap-8">
+          <div className="flex flex-col gap-8 text-center">
             <h2 className="text-2xl font-bold leading-8 tracking-wide">
-              USER Authenticatin System with CRUD operations
+              USER Authentication System with CRUD operations
             </h2>
-            <div className="text-lg font-normal tracking-tight">
+            <div className="text-lg font-normal tracking-tight text-center">
               This is a user authentication system developed using react as
               front end and express as backend.
               <p className="text-sm mt-4">
