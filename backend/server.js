@@ -5,7 +5,7 @@ const bcrypt = require("bcrypt");
 const jwt = require("jsonwebtoken");
 const cookieParser = require("cookie-parser");
 const cors = require('cors');
-const db = require("./models"); // Import the db object
+const db = require("./models/index"); // Import the db object
 
 const PORT = process.env.PORT || 8000;
 const app = express();
